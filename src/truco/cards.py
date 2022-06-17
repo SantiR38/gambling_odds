@@ -39,6 +39,9 @@ class Card:
 
 
 class Hand:
+    __cards = None
+    __cards_suits = None
+
     def __init__(self, card1, card2, card3):
         self.card1: Card = card1
         self.card2: Card = card2
@@ -49,7 +52,11 @@ class Hand:
 
     @property
     def cards(self):
-        return [self.card1, self.card2, self.card3]
+        return self.__cards or [self.card1, self.card2, self.card3]
+
+    @property
+    def cards_suits(self):
+        return self.__cards_suits or [card.suit for card in self.cards]
 
     @classmethod
     def generate_random_hand(cls):
@@ -66,8 +73,29 @@ class Hand:
 
         return cls(card1, card2, card3)
 
+    @property
+    def max_card_value(self):
+        return max(card.value_envido for card in self.cards)
+
     def get_envido_points(self):
-        cards_suits = (card.suit for card in self.cards)
-        cards_values = (card.value for card in self.cards)
-        index_min = cards_values.index(min(cards_values))
-        return sum(card.value_envido for card in self.cards)
+        cards_values = [card.value_envido for card in self.cards]
+
+        equal_values = len(set(self.cards_suits))
+
+        # All same suit
+        if equal_values == 1:
+            cards_values.remove(min(cards_values))
+            return sum(cards_values) + 20
+
+        # Two same suit
+        elif equal_values == 2:
+            repeated_suit = max(set(self.cards_suits),
+                key = self.cards_suits.count)
+            envido_points = sum([
+                x.value_envido for x in self.cards \
+                    if x.suit == repeated_suit
+            ]) + 20
+            return envido_points
+
+        # All different suits
+        return self.max_card_value
